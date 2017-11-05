@@ -5,13 +5,18 @@
 
 // the UART used for iprintf
 UART_HandleTypeDef huart1;
-
 // UART2 for ESP
+UART_HandleTypeDef huart2;
+
+I2C_HandleTypeDef hi2c1;
+
 
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_I2C1_Init(void);
+static void MX_USART2_UART_Init(void);
 
 /*
  * Setup all the non specific HW in the system.
@@ -23,6 +28,8 @@ bool platformHW_Init(void) {
    // Initialize all configured peripherals
    MX_GPIO_Init();
    MX_USART1_UART_Init();
+   MX_USART2_UART_Init();
+   MX_I2C1_Init();
 
    return true;
 }
@@ -31,9 +38,9 @@ bool platformHW_Init(void) {
  */
 void SystemClock_Config(void)
 {
-
    RCC_OscInitTypeDef RCC_OscInitStruct;
    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+   RCC_PeriphCLKInitTypeDef PeriphClkInit;
 
    /**Initializes the CPU, AHB and APB busses clocks 
     */
@@ -58,6 +65,14 @@ void SystemClock_Config(void)
    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+   {
+      Error_Handler();
+   }
+
+   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_I2C1;
+   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
+   PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
+   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
    {
       Error_Handler();
    }
@@ -93,11 +108,75 @@ static void MX_USART1_UART_Init(void)
    }
 }
 
+/* USART2 init function */
+static void MX_USART2_UART_Init(void)
+{
+
+   huart2.Instance = USART2;
+   huart2.Init.BaudRate = 38400;
+   huart2.Init.WordLength = UART_WORDLENGTH_8B;
+   huart2.Init.StopBits = UART_STOPBITS_1;
+   huart2.Init.Parity = UART_PARITY_NONE;
+   huart2.Init.Mode = UART_MODE_TX_RX;
+   huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+   huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+   if (HAL_UART_Init(&huart2) != HAL_OK)
+   {
+      Error_Handler();
+   }
+}
+
+/* I2C1 init function */
+static void MX_I2C1_Init(void)
+{
+
+   hi2c1.Instance = I2C1;
+   hi2c1.Init.Timing = 0x0000020B;
+   hi2c1.Init.OwnAddress1 = 0;
+   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+   hi2c1.Init.OwnAddress2 = 0;
+   hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+   hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+   hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+   if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+   {
+      Error_Handler();
+   }
+
+   /**Configure Analogue filter 
+    */
+   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+   {
+      Error_Handler();
+   }
+}
+
 static void MX_GPIO_Init(void)
 {
+   GPIO_InitTypeDef GPIO_InitStruct;
+
    /* GPIO Ports Clock Enable */
    __HAL_RCC_GPIOA_CLK_ENABLE();
    __HAL_RCC_GPIOB_CLK_ENABLE();
+
+   /*Configure GPIO pin Output Level */
+   HAL_GPIO_WritePin(ESP_nRST_GPIO_Port, ESP_nRST_Pin, GPIO_PIN_RESET);
+
+   /*Configure GPIO pins : nCHG_Pin ACCEL_INT2_Pin ACCEL_INT1_Pin */
+   GPIO_InitStruct.Pin = nCHG_Pin|ACCEL_INT2_Pin|ACCEL_INT1_Pin;
+   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+   GPIO_InitStruct.Pull = GPIO_NOPULL;
+   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+   /*Configure GPIO pin : ESP_nRST_Pin */
+   GPIO_InitStruct.Pin = ESP_nRST_Pin;
+   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+   GPIO_InitStruct.Pull = GPIO_NOPULL;
+   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+   HAL_GPIO_Init(ESP_nRST_GPIO_Port, &GPIO_InitStruct);
 }
 
 /**
