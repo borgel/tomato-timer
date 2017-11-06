@@ -18,11 +18,13 @@
 #define UNIQUE_ID_REG_GET8(x)        ((x >= 0 && x < 12) ? (*(uint8_t *) (UNIQUE_ID_REG_ADDR + (x))) : 0)
 
 uint32_t bid_GetID(void) {
+   /*
    int i;
    for(i = 0; i < 12; i++) {
       //FIXME rm printing
       iprintf("ID #%d - 0x%x (%c)\n", i, UNIQUE_ID_REG_GET8(i), UNIQUE_ID_REG_GET8(i));
    }
+   */
 
    // use wafer X/Y for ID. The tray I got all has the same lot number
    return   UNIQUE_ID_REG_GET8(0) << 0 |
