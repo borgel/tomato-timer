@@ -7,11 +7,15 @@
 #include "iprintf.h"
 
 #include "led.h"
+#include "accelerometer.h"
 #include "board_id.h"
 #include "version.h"
 
 #include <string.h>
 #include <stdlib.h>
+
+//FIXME move elsewhere
+extern I2C_HandleTypeDef hi2c1;
 
 int main(void)
 {
@@ -22,11 +26,10 @@ int main(void)
 
    iprintf("\r\nStarting... (v%d | #0x%x / 0x%x | Built "__DATE__":"__TIME__")\r\n", FW_VERSION, bid_GetID(), bid_GetIDCrc());
 
-   led_Init();
+   //led_Init();
 
-   while(1)
-   {
-   }
+   accelerometer_Init();
+   //accelerometer_TestStream();
 
    return 0;
 }
