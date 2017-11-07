@@ -69,7 +69,9 @@ C_INCLUDES += -Isubmodules/baf/include -Isubmodules/yabi/include
 AS_INCLUDES = $(C_INCLUDES)
 
 # compile gcc flags
-OPTIMIZATIONS = -Os -flto -fdata-sections -ffunction-sections
+# FIXME enable if we need less size
+# OPTIMIZATIONS = -Os -flto -fdata-sections -ffunction-sections
+OPTIMIZATIONS = -ffunction-sections
 ASFLAGS = -mthumb -mcpu=cortex-m0 $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall $(OPTIMIZATIONS)
 CFLAGS = -mthumb -mcpu=cortex-m0 $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall $(OPTIMIZATIONS)
 ifeq ($(DEBUG), 1)
