@@ -26,20 +26,9 @@ int main(void)
 
    //led_Init();
 
-   //accelerometer_Init();
+   accelerometer_Init();
+   accelerometer_TestOrientation();
    //accelerometer_TestStream();
-
-   //FIXME rm
-   iprintf("Starting EEPROM Test...\n");
-
-   uint8_t dataOut[] = "This is a test string!";
-   uint8_t dataIn[sizeof(dataOut)] = {};
-
-   eeprom_Write(0x0, dataOut, sizeof(dataOut));
-   eeprom_Read(0x0, dataIn, sizeof(dataIn));
-
-   iprintf("Wrote [%s]\n", dataOut);
-   iprintf("Read [%s]\n", dataIn);
 
    return 0;
 }
