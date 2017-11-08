@@ -194,6 +194,7 @@ void accelerometer_TestOrientation(void) {
    _SetEnterStandby(false);
 
    iprintf("Starting Orientation Loop...\n");
+   uint8_t int1;
    while (1) {
       HAL_Delay(1000);
 
@@ -204,7 +205,9 @@ void accelerometer_TestOrientation(void) {
          iprintf("PL Stat = 0x%x\n", stat);
          continue;
       }
-      iprintf("Orient = 0x%x\n", regOrient);
+      iprintf("Orient = 0x%x ", regOrient);
+      int1 = HAL_GPIO_ReadPin(ACCEL_INT1_GPIO_Port, ACCEL_INT1_Pin);
+      iprintf("int1 = %d\n", int1);
    }
 
 }
