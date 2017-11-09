@@ -14,7 +14,10 @@
 
 #define        REG_STATUS        (0x00)
 #define        REG_OUT_X_MSB     (0x01)   //0x01 thru 0x06 are X/Y/Z
+#define        REG_SYSMOD        (0x0B)
+#define        REG_INT_SOURCE    (0x0C)
 #define        REG_WHO_AM_I      (0x0D)
+#define        REG_XYZ_DATA_CFG  (0x0E)
 #define        REG_PL_STATUS     (0x10)
 #define        REG_PL_CFG        (0x11)
 #define        REG_PL_COUNT      (0x12)
@@ -145,17 +148,19 @@ static bool _SetEnabledInterrupts(enum Interrupts enabledInterrupts, enum Interr
    HAL_StatusTypeDef stat;
    uint8_t reg = 0;
 
-   // don't bother reading CTRL4 or CRTL5, we are about to wipe them out
-
-   reg = enabledInterrupts;
-
-   // write it back
-   stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_CTRL4, 1, &reg, 1, 1000);
+   //TODO enable wake from motion
+   // interrupt polarity active high, push/pull, orientation can wake accele
+   reg = (0x0 << 0) | (0x1 << 1) | (0x1 << 5);
+   stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_CTRL3, 1, &reg, 1, 1000);
    iprintf("Standby 2 Stat = 0x%x\n", stat);
 
-   reg = enabledLines;
+   stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_CTRL4, 1, &reg, 1, 1000);
+   iprintf("CTRL4 1 Stat = 0x%x\n", stat);
+   reg |= enabledInterrupts;
+   stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_CTRL4, 1, &reg, 1, 1000);
+   iprintf("CTRL4 2 Stat = 0x%x\n", stat);
 
-   // write it back
+   reg = enabledLines;
    stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_CTRL5, 1, &reg, 1, 1000);
    iprintf("Standby 2 Stat = 0x%x\n", stat);
 
@@ -171,10 +176,23 @@ void accelerometer_TestOrientation(void) {
    //set sample rate to 50Hz
    _SetSampleRate(SAMPLE_RATE_50HZ);
 
+   // set full scale
+   uint8_t regScale = 0x1 << 0;
+   stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_XYZ_DATA_CFG, 1, &regScale, 1, 1000);
+   iprintf("Enable orientation detect stat = 0x%x\n", stat);
+
+   /*
+   //disable sleep
+   uint8_t regSysmod = 0x01;
+   stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_SYSMOD, 1, &regSysmod, 1, 1000);
+   iprintf("Enable orientation detect stat = 0x%x\n", stat);
+   */
+
    //enable port/land mode 0x11
-   uint8_t regPlCFG = 0x1 << 6;
+   //uint8_t regPlCFG = (0x1 << 6) | (0x1 << 7);
+   uint8_t regPlCFG = (0x1 << 6);
    stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_PL_CFG, 1, &regPlCFG, 1, 1000);
-   iprintf("Enable PL Stat = 0x%x\n", stat);
+   iprintf("Enable orientation detect stat = 0x%x\n", stat);
 
    // These things are suggested in AN4068, but are not possible with out SKU
    //Cannot set front/back angle trip points in 0x13
@@ -183,7 +201,7 @@ void accelerometer_TestOrientation(void) {
    //Cannot set hysteresis angle in 0x14
 
    // enable interrupt detection and set which pins to route them to
-   _SetEnabledInterrupts(INT_EN_LNDPRT, INT_EN_LNDPRT_INT1);
+   _SetEnabledInterrupts(INT_EN_LNDPRT, INT_EN_LNDPRT_INT1 | (0x1 << 7));
 
    // set debounce counter
    uint8_t debounce = 0x05;
@@ -194,20 +212,53 @@ void accelerometer_TestOrientation(void) {
    _SetEnterStandby(false);
 
    iprintf("Starting Orientation Loop...\n");
-   uint8_t int1;
+
+   // prime it
+   uint8_t regOrient;
+   uint8_t int1, int2;
    while (1) {
       HAL_Delay(1000);
 
+      /*
+         //these clear interrupts. dont do them before getting pin status
       // print port/land
-      uint8_t regOrient;
       stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_PL_STATUS, 1, &regOrient, 1, 1000);
       if(stat != 0) {
          iprintf("PL Stat = 0x%x\n", stat);
          continue;
       }
       iprintf("Orient = 0x%x ", regOrient);
+
+      stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_INT_SOURCE, 1, &regOrient, 1, 1000);
+      if(stat != 0) {
+         iprintf("int source Stat = 0x%x\n", stat);
+         continue;
+      }
+      iprintf("Int Source = 0x%x ", regOrient);
+      */
+
       int1 = HAL_GPIO_ReadPin(ACCEL_INT1_GPIO_Port, ACCEL_INT1_Pin);
-      iprintf("int1 = %d\n", int1);
+      int2 = HAL_GPIO_ReadPin(ACCEL_INT2_GPIO_Port, ACCEL_INT2_Pin);
+      iprintf("int1 = %d, int2 = %d\n", int1, int2);
+      if(int1) {
+         iprintf("Saw Int 1!\n");
+
+         // clear int source
+         stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_INT_SOURCE, 1, &regOrient, 1, 1000);
+         if(stat != 0) {
+            iprintf("int source Stat = 0x%x\n", stat);
+            continue;
+         }
+         iprintf("Int Source = 0x%x ", regOrient);
+
+         // clear int source
+         stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_PL_STATUS, 1, &regOrient, 1, 1000);
+         if(stat != 0) {
+            iprintf("PL Stat = 0x%x\n", stat);
+            continue;
+         }
+         iprintf("Orient (PL Status) = 0x%x ", regOrient);
+      }
    }
 
 }
