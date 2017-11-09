@@ -24,15 +24,22 @@ int main(void)
 
    iprintf("\r\nStarting... (v%d | #0x%x / 0x%x | Built "__DATE__":"__TIME__")\r\n", FW_VERSION, bid_GetID(), bid_GetIDCrc());
 
-   //led_Init();
+   led_Init();
 
    accelerometer_Init();
    //accelerometer_TestOrientation();
    //accelerometer_TestStream();
 
+   for(int i = 0; i < 36; i++) {
+      led_SetChannel(i, 122);
+      HAL_Delay(200);
+   }
+
    while(1) {
       //TODO goto WFI?
-      // HAL_PWR_EnterSLEEPMode(0, PWR_SLEEPENTRY_WFI);
+      //HAL_PWR_EnterSLEEPMode(0, PWR_SLEEPENTRY_WFI);
+
+      //led_SetChannel(7, 122);
    }
 
    return 0;
