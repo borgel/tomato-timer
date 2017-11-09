@@ -233,7 +233,6 @@ static bool _ConfigureOrientationDetection() {
 void accelerometer_DecodeInterrupt(void) {
    HAL_StatusTypeDef stat;
    uint8_t regOrient;
-   uint8_t int1, int2;
 
    // get int source
    stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_INT_SOURCE, 1, &regOrient, 1, 1000);

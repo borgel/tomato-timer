@@ -41,8 +41,7 @@ void EXTI4_15_IRQHandler(void) {
       __HAL_GPIO_EXTI_CLEAR_IT(ACCEL_INT1_Pin);
       iprintf("\nINT1\n");
 
-      // TODO forward this somewhere
-      accelerometer_DecodeInterrupt();
+      main_SetAcceleInt();
    }
    if(__HAL_GPIO_EXTI_GET_IT(ACCEL_INT2_Pin)) {
       __HAL_GPIO_EXTI_CLEAR_IT(ACCEL_INT2_Pin);

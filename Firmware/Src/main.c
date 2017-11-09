@@ -15,10 +15,22 @@
 #include <string.h>
 #include <stdlib.h>
 
+union Interrupts {
+   uint32_t mask;
+   struct {
+      uint8_t     accelerometer  : 1;
+      uint8_t     charger        : 1;
+   };
+};
+
+static union Interrupts ints;
+
 int main(void)
 {
    // Reset of all peripherals, Initializes the Flash interface and the Systick
    HAL_Init();
+
+   //HAL_GetTick();
 
    platformHW_Init();
 
@@ -30,24 +42,33 @@ int main(void)
    //accelerometer_TestOrientation();
    //accelerometer_TestStream();
 
+   /*
    for(int i = 0; i < 36; i++) {
       led_SetChannel(i, 122);
       HAL_Delay(200);
    }
+   */
 
    while(1) {
-      //TODO goto WFI?
-      //HAL_PWR_EnterSLEEPMode(0, PWR_SLEEPENTRY_WFI);
+      // Process all pending interrupts
+      while(ints.mask) {
+         if(ints.accelerometer) {
+            ints.accelerometer = 0;
 
-      //led_SetChannel(7, 122);
+            accelerometer_DecodeInterrupt();
+
+            led_SetChannel(7, 122);
+         }
+      }
+
+      //TODO goto WFI?
+      HAL_PWR_EnterSLEEPMode(0, PWR_SLEEPENTRY_WFI);
    }
 
    return 0;
 }
 
-
-void main_ButtonCB(void) {
-   //HAL_GetTick();
-   iprintf("Button!\n");
+void main_SetAcceleInt(void) {
+   ints.accelerometer = 1;
 }
 
