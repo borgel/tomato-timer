@@ -1,6 +1,10 @@
 #include "platform_hw.h"
 #include "iprintf.h"
 
+#include "stm32f0xx_hal.h"
+#include "stm32f0xx.h"
+#include "stm32f0xx_it.h"
+
 #include <string.h>
 
 // the UART used for iprintf
@@ -167,9 +171,20 @@ static void MX_GPIO_Init(void)
 
    /*Configure GPIO pins : nCHG_Pin ACCEL_INT2_Pin ACCEL_INT1_Pin */
    GPIO_InitStruct.Pin = nCHG_Pin|ACCEL_INT2_Pin|ACCEL_INT1_Pin;
-   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
    GPIO_InitStruct.Pull = GPIO_NOPULL;
    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+   // enable EXTI interrupts for all of above
+   // nCHG = 1
+   // INT1 = 12
+   // INT2 = 11
+   // so we need 0-1, and 4-15
+   HAL_NVIC_SetPriority(EXTI0_1_IRQn, 0, 0);
+   HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
+
+   HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
    /*Configure GPIO pin : ESP_nRST_Pin */
    GPIO_InitStruct.Pin = ESP_nRST_Pin;

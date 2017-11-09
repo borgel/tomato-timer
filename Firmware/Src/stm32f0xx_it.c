@@ -7,6 +7,8 @@
 #include "stm32f0xx_hal_tim.h"
 #include "stm32f0xx_hal_tim_ex.h"
 
+#include "platform_hw.h"
+
 #include "main.h"
 #include "iprintf.h"
 
@@ -21,14 +23,26 @@ void SysTick_Handler(void)
    HAL_SYSTICK_IRQHandler();
 }
 
-/*
- * Handle any EXTI0 events (IE all GPIO Pin 0's)
- */
+// Handle events on pins 0-1
 void EXTI0_1_IRQHandler(void) {
-   if(__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_0)) {
-      __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
+   if(__HAL_GPIO_EXTI_GET_IT(nCHG_Pin)) {
+      __HAL_GPIO_EXTI_CLEAR_IT(nCHG_Pin);
 
-      main_ButtonCB();
+      iprintf("nCHG\n");
+
+      //TODO something useful
+   }
+}
+
+// Handle things on pins 4-15
+void EXTI4_15_IRQHandler(void) {
+   if(__HAL_GPIO_EXTI_GET_IT(ACCEL_INT1_Pin)) {
+      __HAL_GPIO_EXTI_CLEAR_IT(ACCEL_INT1_Pin);
+      iprintf("INT1\n");
+   }
+   if(__HAL_GPIO_EXTI_GET_IT(ACCEL_INT2_Pin)) {
+      __HAL_GPIO_EXTI_CLEAR_IT(ACCEL_INT2_Pin);
+      iprintf("INT2\n");
    }
 }
 
