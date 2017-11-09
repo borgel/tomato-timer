@@ -4,5 +4,6 @@
 
 bool accelerometer_Init(void);
 void accelerometer_TestStream(void);
-void accelerometer_TestOrientation(void);
+
+void accelerometer_DecodeInterrupt(void);
 

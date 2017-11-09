@@ -32,6 +32,8 @@
 //FIXME move elsewhere
 extern I2C_HandleTypeDef hi2c1;
 
+static bool _ConfigureOrientationDetection();
+
 bool accelerometer_Init(void) {
    HAL_StatusTypeDef stat;
 
@@ -44,6 +46,11 @@ bool accelerometer_Init(void) {
       iprintf("Acceleromete: Who Am I value mismatch! Got 0x%x expected 0x%x\n", idReg, WHO_AM_I_VAL);
       return false;
    }
+
+   if(!_ConfigureOrientationDetection()) {
+      return false;
+   }
+
    return true;
 }
 
@@ -172,23 +179,33 @@ static bool _SetEnabledInterrupts(enum Interrupts enabledInterrupts, enum Interr
    return (stat == 0);
 }
 
-void accelerometer_TestOrientation(void) {
+static bool _ConfigureOrientationDetection() {
    HAL_StatusTypeDef stat;
 
-   _SetEnterStandby(true);
+   if(!_SetEnterStandby(true)) {
+      return false;
+   }
 
    //set sample rate to 50Hz
-   _SetSampleRate(SAMPLE_RATE_50HZ);
+   if(!_SetSampleRate(SAMPLE_RATE_50HZ)) {
+      return false;
+   }
 
    // set full scale
    uint8_t regScale = 0x1 << 0;
    stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_XYZ_DATA_CFG, 1, &regScale, 1, 1000);
-   iprintf("Enable orientation detect stat = 0x%x\n", stat);
+   if(stat != 0) {
+      iprintf("Enable orientation detect stat = 0x%x\n", stat);
+      return false;
+   }
 
    //enable port/land mode 0x11
    uint8_t regPlCFG = (0x1 << 6) | (0x1 << 7);
    stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_PL_CFG, 1, &regPlCFG, 1, 1000);
-   iprintf("Enable orientation detect stat = 0x%x\n", stat);
+   if(stat != 0) {
+      iprintf("Enable orientation detect stat = 0x%x\n", stat);
+      return false;
+   }
 
    // These things are suggested in AN4068, but are not possible with out SKU
    //Cannot set front/back angle trip points in 0x13
@@ -202,41 +219,34 @@ void accelerometer_TestOrientation(void) {
    // set debounce counter
    uint8_t debounce = 0x05;
    stat = HAL_I2C_Mem_Write(&hi2c1, ACCELE_ADDR, REG_PL_COUNT, 1, &debounce, 1, 1000);
-   iprintf("Debounce Stat = 0x%x\n", stat);
+   if(stat != 0) {
+      iprintf("Debounce Stat = 0x%x\n", stat);
+      return false;
+   }
 
    // enter active mode
    _SetEnterStandby(false);
 
-   iprintf("Starting Orientation Loop...\n");
+   return true;
+}
 
-   // prime it
+void accelerometer_DecodeInterrupt(void) {
+   HAL_StatusTypeDef stat;
    uint8_t regOrient;
    uint8_t int1, int2;
-   while (1) {
-      HAL_Delay(1000);
 
-      int1 = HAL_GPIO_ReadPin(ACCEL_INT1_GPIO_Port, ACCEL_INT1_Pin);
-      int2 = HAL_GPIO_ReadPin(ACCEL_INT2_GPIO_Port, ACCEL_INT2_Pin);
-      iprintf("int1 = %d, int2 = %d\n", int1, int2);
-      if(int1) {
-         iprintf("Saw Int 1!\n");
-
-         // get int source
-         stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_INT_SOURCE, 1, &regOrient, 1, 1000);
-         if(stat != 0) {
-            iprintf("int source Stat = 0x%x\n", stat);
-            continue;
-         }
-         iprintf("Int Source = 0x%x ", regOrient);
-
-         // clear int and get orientation
-         stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_PL_STATUS, 1, &regOrient, 1, 1000);
-         if(stat != 0) {
-            iprintf("PL Stat = 0x%x\n", stat);
-            continue;
-         }
-         iprintf("Orient (PL Status) = 0x%x ", regOrient);
-      }
+   // get int source
+   stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_INT_SOURCE, 1, &regOrient, 1, 1000);
+   if(stat != 0) {
+      iprintf("int source Stat = 0x%x\n", stat);
    }
+   iprintf("Int Source = 0x%x ", regOrient);
 
+   // clear int and get orientation
+   stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_PL_STATUS, 1, &regOrient, 1, 1000);
+   if(stat != 0) {
+      iprintf("PL Stat = 0x%x\n", stat);
+   }
+   iprintf("Orient (PL Status) = 0x%x ", regOrient);
 }
+
