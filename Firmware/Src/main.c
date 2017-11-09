@@ -27,8 +27,13 @@ int main(void)
    //led_Init();
 
    accelerometer_Init();
-   accelerometer_TestOrientation();
+   //accelerometer_TestOrientation();
    //accelerometer_TestStream();
+
+   while(1) {
+      //TODO goto WFI?
+      // HAL_PWR_EnterSLEEPMode(0, PWR_SLEEPENTRY_WFI);
+   }
 
    return 0;
 }

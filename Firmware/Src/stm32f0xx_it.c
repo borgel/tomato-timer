@@ -7,6 +7,7 @@
 #include "stm32f0xx_hal_tim.h"
 #include "stm32f0xx_hal_tim_ex.h"
 
+#include "accelerometer.h"
 #include "platform_hw.h"
 
 #include "main.h"
@@ -38,11 +39,14 @@ void EXTI0_1_IRQHandler(void) {
 void EXTI4_15_IRQHandler(void) {
    if(__HAL_GPIO_EXTI_GET_IT(ACCEL_INT1_Pin)) {
       __HAL_GPIO_EXTI_CLEAR_IT(ACCEL_INT1_Pin);
-      iprintf("INT1\n");
+      iprintf("\nINT1\n");
+
+      // TODO forward this somewhere
+      accelerometer_DecodeInterrupt();
    }
    if(__HAL_GPIO_EXTI_GET_IT(ACCEL_INT2_Pin)) {
       __HAL_GPIO_EXTI_CLEAR_IT(ACCEL_INT2_Pin);
-      iprintf("INT2\n");
+      iprintf("\nINT2\n");
    }
 }
 
