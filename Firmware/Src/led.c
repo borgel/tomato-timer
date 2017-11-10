@@ -40,29 +40,24 @@ void led_Init(void){
    stat = HAL_I2C_Master_Transmit(&hi2c1, LED_CONT_ADDR, data, 2, 1000);
    iprintf("Stat = 0x%x\n", stat);
 
-   HAL_Delay(100);
-
-   _ForceUpdate();
-
    // set enable bit and scalar on all channels
    for(int i = 0; i < 36; i++) {
       _EnableChannel(i, DIVISOR_4);
    }
 
-   HAL_Delay(100);
-
-   // write update bit to commit all values
-   data[0] = REG_PWM_UPDATE;
-   data[1] = 0x0;
-   stat = HAL_I2C_Master_Transmit(&hi2c1, LED_CONT_ADDR, data, 2, 1000);
-   iprintf("Stat = 0x%x\n", stat);
-
-   HAL_Delay(100);
+   _ForceUpdate();
 
    // enable all channels
    data[0] = REG_GLOBAL_CONTROL;
    data[1] = 0x0;
    stat = HAL_I2C_Master_Transmit(&hi2c1, LED_CONT_ADDR, data, 2, 1000);
+}
+
+void led_ClearDisplay(void) {
+   //TODO actually disable the channels to save power
+   for(int i = 0; i < 36; i++) {
+      led_SetChannel(i, 0);
+   }
 }
 
 bool led_SetChannel(uint8_t chan, uint8_t intensity) {
