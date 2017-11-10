@@ -15,11 +15,28 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define     MAX_SESSION_LENGTH         (36)
+#define     SESSION_LENGTH_LONG        (20)
+#define     SESSION_LENGTH_SHORT       (10)
+
 struct badTimer {
    uint32_t duration;
    uint32_t start;
    bool complete;
 };
+
+enum sessionState {
+   SESSION_UNSTARTED,
+   SESSION_IN_PROGRESS,
+   SESSION_CLEANUP,
+   SESSION_COMPLETE,
+};
+
+struct basicCountdown {
+   uint8_t current;        // count UP from here until 36. number of LEDs is amount of time
+   enum sessionState state;
+};
+
 union Interrupts {
    uint32_t mask;
    struct {
@@ -30,39 +47,116 @@ union Interrupts {
 
 static union Interrupts ints;
 
+static void _TimerSet(struct badTimer * t, uint32_t const duration);
+static void _TimerReset(struct badTimer * t);
+static void _TimerRestart(struct badTimer * t);
+static bool _TimerHasElapsed(struct badTimer * const t);
+
 int main(void)
 {
-   // Reset of all peripherals, Initializes the Flash interface and the Systick
-   HAL_Init();
+   struct badTimer timer;
+   //FIXME session unstarted?
+   struct basicCountdown session = {.state = SESSION_COMPLETE};
 
-   //HAL_GetTick();
+   HAL_Init();
 
    platformHW_Init();
 
    iprintf("\r\nStarting... (v%d | #0x%x / 0x%x | Built "__DATE__":"__TIME__")\r\n", FW_VERSION, bid_GetID(), bid_GetIDCrc());
 
+   _TimerReset(&timer);
+
    led_Init();
-
    accelerometer_Init();
-   //accelerometer_TestOrientation();
-   //accelerometer_TestStream();
 
-   /*
-   for(int i = 0; i < 36; i++) {
-      led_SetChannel(i, 122);
-      HAL_Delay(200);
+   // boot "animation"
+   for(int i = 0; i < 18; i++) {
+      led_SetChannel(18 + i, 50);
+      led_SetChannel(18 - i, 50);
+      HAL_Delay(30);
    }
-   */
+   led_ClearDisplay();
 
+   struct accelerometer_CombinedOrientation orient;
    while(1) {
       // Process all pending interrupts
       while(ints.mask) {
          if(ints.accelerometer) {
+            // mark the accelerometer as 'handled'
             ints.accelerometer = 0;
 
-            accelerometer_DecodeInterrupt();
+            session.current = 0;
 
-            led_SetChannel(7, 122);
+            orient = accelerometer_DecodeInterrupt();
+            if(   orient.orient == AC_ORIENT_PORTRAIT_UP ||
+                  orient.orient == AC_ORIENT_PORTRAIT_DOWN) {
+
+               iprintf("Portrait session start\n");
+
+               led_ClearDisplay();
+
+               // configure this work session
+               session.current = MAX_SESSION_LENGTH - SESSION_LENGTH_LONG;
+               session.state = SESSION_IN_PROGRESS;
+
+               // animation frame timer
+               _TimerSet(&timer, 1000);
+            }
+            else if( orient.orient == AC_ORIENT_LANDSCAPE_RIGHT ||
+                     orient.orient == AC_ORIENT_LANDSCAPE_LEFT) {
+
+               iprintf("Landscape session start\n");
+
+               led_ClearDisplay();
+
+               // configure this work session
+               session.current = MAX_SESSION_LENGTH - SESSION_LENGTH_SHORT;
+               session.state = SESSION_IN_PROGRESS;
+
+               // animation frame timer
+               _TimerSet(&timer, 1000);
+            }
+            else if(orient.orient ==  AC_ORIENT_Z_LOCKOUT) {
+               iprintf("Z Lockout - no gesture\n");
+
+               led_ClearDisplay();
+               _TimerReset(&timer);
+            }
+         }
+      }
+
+      if(   session.state != SESSION_COMPLETE &&
+            _TimerHasElapsed(&timer)) {
+
+         //FIXME rm
+         iprintf("TIMER EXPIRED\n");
+
+         switch(session.state) {
+            case SESSION_IN_PROGRESS:
+               if(session.current > 0) {
+                  led_SetChannel(session.current - 1, 0);
+               }
+               led_SetChannel(session.current, 80);
+               session.current++;
+
+               if(session.current >= 36) {
+                  // we're done
+                  session.state = SESSION_CLEANUP;
+               }
+
+               // always restart this so we can cleanup LEDs
+               _TimerRestart(&timer);
+               break;
+
+            case SESSION_CLEANUP:
+               // disable all LEDs
+               led_ClearDisplay();
+               session.state = SESSION_COMPLETE;
+               break;
+
+            case SESSION_UNSTARTED:
+            default:
+               break;
          }
       }
 
