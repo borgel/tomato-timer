@@ -15,6 +15,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+struct badTimer {
+   uint32_t duration;
+   uint32_t start;
+   bool complete;
+};
 union Interrupts {
    uint32_t mask;
    struct {
@@ -66,6 +71,38 @@ int main(void)
    }
 
    return 0;
+}
+
+static void _TimerReset(struct badTimer * t) {
+   t->duration = 0;
+   t->start = 0;
+   t->complete = true;
+}
+
+static void _TimerSet(struct badTimer * t, uint32_t const duration) {
+   t->duration = duration;
+   _TimerRestart(t);
+}
+
+static void _TimerRestart(struct badTimer * t) {
+   t->start = HAL_GetTick();
+   t->complete = false;
+}
+
+static bool _TimerHasElapsed(struct badTimer * const t) {
+   // only return EDGES
+   if(t->complete) {
+      return false;
+   }
+
+   //FIXME rm
+   //iprintf("%d - %d = %d ( > %d)\n", HAL_GetTick(), t->start, (HAL_GetTick() - t->start), t->duration);
+
+   if(HAL_GetTick() - t->start > t->duration) {
+      t->complete = true;
+      return true;
+   }
+   return false;
 }
 
 void main_SetAcceleInt(void) {
