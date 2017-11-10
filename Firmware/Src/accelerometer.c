@@ -230,9 +230,11 @@ static bool _ConfigureOrientationDetection() {
    return true;
 }
 
-void accelerometer_DecodeInterrupt(void) {
+struct accelerometer_CombinedOrientation accelerometer_DecodeInterrupt(void) {
    HAL_StatusTypeDef stat;
+   struct accelerometer_CombinedOrientation co;
    uint8_t regOrient;
+   uint8_t position, frontback;
 
    // get int source
    stat = HAL_I2C_Mem_Read(&hi2c1, ACCELE_ADDR, REG_INT_SOURCE, 1, &regOrient, 1, 1000);
@@ -247,5 +249,44 @@ void accelerometer_DecodeInterrupt(void) {
       iprintf("PL Stat = 0x%x\n", stat);
    }
    iprintf("Orient (PL Status) = 0x%x ", regOrient);
+
+   // return what orientation this was
+
+   // if we are in Z lockout, ignore the orientation bits
+   if(regOrient & (0x1 << 6)) {
+      co.orient = AC_ORIENT_Z_LOCKOUT;
+   }
+   else {
+      // decode orientation bits
+      position = (regOrient >> 1) & ~0xFC;
+      iprintf("Orient filtered = 0x%x ", position);
+      switch(position) {
+         case 0x00:
+            co.orient = AC_ORIENT_PORTRAIT_UP;
+            break;
+         case 0x01:
+            co.orient = AC_ORIENT_PORTRAIT_DOWN;
+            break;
+         case 0x02:
+            co.orient = AC_ORIENT_LANDSCAPE_RIGHT;
+            break;
+         case 0x03:
+            co.orient = AC_ORIENT_LANDSCAPE_LEFT;
+            break;
+      }
+   }
+
+   // decode front/back
+   frontback = regOrient;
+   if(frontback & 0x1) {
+      co.frontback = AC_FB_BACK;
+   }
+   else {
+      co.frontback = AC_FB_FRONT;
+   }
+
+   co.timeUS = HAL_GetTick();
+
+   return co;
 }
 

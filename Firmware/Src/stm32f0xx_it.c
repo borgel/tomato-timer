@@ -39,8 +39,6 @@ void EXTI0_1_IRQHandler(void) {
 void EXTI4_15_IRQHandler(void) {
    if(__HAL_GPIO_EXTI_GET_IT(ACCEL_INT1_Pin)) {
       __HAL_GPIO_EXTI_CLEAR_IT(ACCEL_INT1_Pin);
-      iprintf("\nINT1\n");
-
       main_SetAcceleInt();
    }
    if(__HAL_GPIO_EXTI_GET_IT(ACCEL_INT2_Pin)) {
