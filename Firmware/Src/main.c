@@ -149,6 +149,11 @@ int main(void)
                break;
 
             case SESSION_CLEANUP:
+               // end animation
+               for(int i = 35; i >= 0; i--) {
+                  led_SetChannel(i, 50);
+                  HAL_Delay(10);
+               }
                // disable all LEDs
                led_ClearDisplay();
                session.state = SESSION_COMPLETE;
