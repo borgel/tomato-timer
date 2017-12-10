@@ -30,7 +30,8 @@ enum sessionState {
    SESSION_UNSTARTED,
    SESSION_IN_PROGRESS,
    SESSION_CLEANUP,
-   SESSION_COMPLETE,
+   SESSION_COMPLETE,       //from here done, count as coumpleted or disabled
+   SESSION_CHARGING,
 };
 
 struct basicCountdown {
@@ -87,9 +88,33 @@ int main(void)
    while(1) {
       // Process all pending interrupts
       while(ints.mask) {
+         // assume any time this is set, there has been a change
+         if(ints.charger) {
+            // mark the timer as 'handled'
+            state.charging = 0;
+
+            //FIXME rm
+            iprintf("charging = %d\n", state.charging);
+
+            if(state.charging) {
+               session.state = SESSION_CHARGING;
+               _TimerReset(&timer);
+            }
+            else {
+               // not charging, re-enable system
+               session.state = SESSION_UNSTARTED;
+
+               //TODO de-configure accele interrupts instead of state stuff
+            }
+         }
+
          if(ints.accelerometer) {
             // mark the accelerometer as 'handled'
             ints.accelerometer = 0;
+
+            // if we are charging, don't stare a new session
+            if(session.state >=  SESSION_CHARGING) {
+            }
 
             session.current = 0;
 
@@ -131,7 +156,7 @@ int main(void)
          }
       }
 
-      if(   session.state != SESSION_COMPLETE &&
+      if(   session.state < SESSION_COMPLETE &&
             _TimerHasElapsed(&timer)) {
 
          //FIXME rm
