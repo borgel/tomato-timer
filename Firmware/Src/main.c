@@ -204,8 +204,8 @@ int main(void)
          }
       }
 
-      // TODO if the we are just waiting, go to an intermediate power state. WFI?
-      //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+      // if the we are just waiting, go to an intermediate power state.
+      HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 
       // if the device is idle, go to deep sleep
       if(session.state >= SESSION_COMPLETE) {
