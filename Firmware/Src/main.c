@@ -99,10 +99,16 @@ int main(void)
             if(state.charging) {
                session.state = SESSION_CHARGING;
                _TimerReset(&timer);
+
+               //light middle LED when charging
+               //TODO toggle periodically or something instead of solid on
+               led_ClearDisplay();
+               led_SetChannel(MAX_SESSION_LENGTH / 2, 80);
             }
             else {
                // not charging, re-enable system
                session.state = SESSION_UNSTARTED;
+               led_ClearDisplay();
 
                //TODO de-configure accele interrupts instead of state stuff
             }
