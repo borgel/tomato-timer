@@ -59,6 +59,8 @@ static void _TimerReset(struct badTimer * t);
 static void _TimerRestart(struct badTimer * t);
 static bool _TimerHasElapsed(struct badTimer * const t);
 
+static void _EnterDeepSleep(void);
+
 int main(void)
 {
    struct badTimer timer;
@@ -202,8 +204,16 @@ int main(void)
          }
       }
 
-      //TODO goto WFI?
-      HAL_PWR_EnterSLEEPMode(0, PWR_SLEEPENTRY_WFI);
+      // TODO if the we are just waiting, go to an intermediate power state. WFI?
+      //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+
+      // if the device is idle, go to deep sleep
+      if(session.state >= SESSION_COMPLETE) {
+         iprintf("Trying to deep sleep...\n");
+
+         // this will return from reset
+         _EnterDeepSleep();
+      }
    }
 
    return 0;
@@ -239,6 +249,21 @@ static bool _TimerHasElapsed(struct badTimer * const t) {
       return true;
    }
    return false;
+}
+
+static void _EnterDeepSleep(void) {
+   //TODO disable LED controller
+   //TODO disable accele
+
+   //VREG LPR?
+
+   //enter STOP. We will wake from any EXTI
+   HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+
+   //TODO enter STANDBY
+   //TODO enable accele int 2 to wake up
+   //HAL_PWR_EnableWakeUpPin(1);
+   //HAL_PWR_EnterSTANDBYMode();
 }
 
 void main_SetAcceleInt(void) {
