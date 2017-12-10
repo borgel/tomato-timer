@@ -27,11 +27,12 @@ void SysTick_Handler(void)
 // Handle events on pins 0-1
 void EXTI0_1_IRQHandler(void) {
    if(__HAL_GPIO_EXTI_GET_IT(nCHG_Pin)) {
+      bool state;
       __HAL_GPIO_EXTI_CLEAR_IT(nCHG_Pin);
 
-      iprintf("nCHG\n");
-
-      //TODO something useful
+      //TODO reverse to PIN_SET?
+      state = (GPIO_PIN_RESET == HAL_GPIO_ReadPin(nCHG_GPIO_Port, nCHG_Pin));
+      main_SetChargeState(state);
    }
 }
 

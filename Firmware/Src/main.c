@@ -14,6 +14,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define     MAX_SESSION_LENGTH         (36)
 #define     SESSION_LENGTH_LONG        (20)
@@ -44,6 +45,11 @@ union Interrupts {
       uint8_t     charger        : 1;
    };
 };
+
+struct State {
+   bool charging;
+};
+static struct State state = {0};
 
 static union Interrupts ints;
 
@@ -206,5 +212,10 @@ static bool _TimerHasElapsed(struct badTimer * const t) {
 
 void main_SetAcceleInt(void) {
    ints.accelerometer = 1;
+}
+
+void main_SetChargeState(bool chargeEn) {
+   state.charging = chargeEn;
+   ints.charger = 1;
 }
 
