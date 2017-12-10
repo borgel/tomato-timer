@@ -15,7 +15,6 @@ UART_HandleTypeDef huart2;
 I2C_HandleTypeDef hi2c1;
 
 
-static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);

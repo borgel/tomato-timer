@@ -259,6 +259,8 @@ static void _EnterDeepSleep(void) {
 
    //enter STOP. We will wake from any EXTI
    HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+   // reconfigure our clocks
+   SystemClock_Config();
 
    //TODO enter STANDBY
    //TODO enable accele int 2 to wake up

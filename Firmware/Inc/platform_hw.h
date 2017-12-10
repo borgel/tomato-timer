@@ -17,6 +17,7 @@
 #define ACCEL_INT1_GPIO_Port 	GPIOA
 
 bool platformHW_Init(void);
+void SystemClock_Config(void);
 
 #endif//PLATFORM_HW_H__
 
