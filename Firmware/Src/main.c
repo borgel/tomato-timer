@@ -253,8 +253,7 @@ static bool _TimerHasElapsed(struct badTimer * const t) {
 }
 
 static void _EnterDeepSleep(void) {
-   //TODO disable LED controller
-   //TODO disable accele
+   led_SetShutdown(true);
 
    //VREG LPR?
 
@@ -267,6 +266,8 @@ static void _EnterDeepSleep(void) {
    //TODO enable accele int 2 to wake up
    //HAL_PWR_EnableWakeUpPin(1);
    //HAL_PWR_EnterSTANDBYMode();
+
+   led_SetShutdown(false);
 }
 
 void main_SetAcceleInt(void) {
