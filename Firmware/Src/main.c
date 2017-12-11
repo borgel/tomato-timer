@@ -139,6 +139,9 @@ int main(void)
                session.current = MAX_SESSION_LENGTH - SESSION_LENGTH_LONG;
                session.state = SESSION_IN_PROGRESS;
 
+               // display the first light
+               led_SetChannel(session.current, 80);
+
                // animation frame timer
                _TimerSet(&timer, 1000);
             }
@@ -152,6 +155,9 @@ int main(void)
                // configure this work session
                session.current = MAX_SESSION_LENGTH - SESSION_LENGTH_SHORT;
                session.state = SESSION_IN_PROGRESS;
+
+               // display the first light
+               led_SetChannel(session.current, 80);
 
                // animation frame timer
                _TimerSet(&timer, 1000);
