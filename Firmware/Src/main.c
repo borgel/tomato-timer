@@ -94,7 +94,7 @@ int main(void)
          // assume any time this is set, there has been a change
          if(ints.charger) {
             // mark the timer as 'handled'
-            state.charging = 0;
+            ints.charger = 0;
 
             //FIXME rm
             iprintf("charging = %d\n", state.charging);
