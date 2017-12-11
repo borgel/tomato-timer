@@ -169,8 +169,13 @@ static void MX_GPIO_Init(void)
    HAL_GPIO_WritePin(ESP_nRST_GPIO_Port, ESP_nRST_Pin, GPIO_PIN_RESET);
 
    /*Configure GPIO pins : nCHG_Pin ACCEL_INT2_Pin ACCEL_INT1_Pin */
-   GPIO_InitStruct.Pin = nCHG_Pin|ACCEL_INT2_Pin|ACCEL_INT1_Pin;
+   GPIO_InitStruct.Pin = ACCEL_INT2_Pin|ACCEL_INT1_Pin;
    GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+   GPIO_InitStruct.Pull = GPIO_NOPULL;
+   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+   GPIO_InitStruct.Pin = nCHG_Pin;
+   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
    GPIO_InitStruct.Pull = GPIO_NOPULL;
    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
