@@ -18,7 +18,8 @@
 
 #define     MAX_SESSION_LENGTH         (36)
 #define     SESSION_LENGTH_LONG        (20)
-#define     SESSION_LENGTH_SHORT       (10)
+#define     SESSION_LENGTH_SHORT       (5)
+#define     SECONDS_TO_MINS            (60)
 
 struct badTimer {
    uint32_t duration;
@@ -227,7 +228,8 @@ static void _TimerReset(struct badTimer * t) {
 }
 
 static void _TimerSet(struct badTimer * t, uint32_t const duration) {
-   t->duration = duration;
+   //scale duration to minutes
+   t->duration = duration * SECONDS_TO_MINS;
    _TimerRestart(t);
 }
 
