@@ -216,7 +216,7 @@ int main(void)
       HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 
       // if the device is idle, go to deep sleep
-      if(session.state >= SESSION_COMPLETE) {
+      if(session.state == SESSION_COMPLETE) {
          iprintf("Trying to deep sleep...\n");
 
          // this will return from reset
