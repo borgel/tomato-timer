@@ -160,6 +160,7 @@ int main(void)
 
                led_ClearDisplay();
                _TimerReset(&timer);
+               session.state = SESSION_COMPLETE;
             }
          }
       }
