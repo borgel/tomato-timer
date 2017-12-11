@@ -35,10 +35,7 @@ void led_Init(void){
    uint8_t data[63 + 10] = {};
 
    // disable SW shutdown
-   data[0] = REG_SHUTDOWN;
-   data[1] = 0x1;
-   stat = HAL_I2C_Master_Transmit(&hi2c1, LED_CONT_ADDR, data, 2, 1000);
-   iprintf("Stat = 0x%x\n", stat);
+   led_SetShutdown(false);
 
    // set enable bit and scalar on all channels
    for(int i = 0; i < 36; i++) {
@@ -51,10 +48,20 @@ void led_Init(void){
    data[0] = REG_GLOBAL_CONTROL;
    data[1] = 0x0;
    stat = HAL_I2C_Master_Transmit(&hi2c1, LED_CONT_ADDR, data, 2, 1000);
+
+   iprintf("Global Chan En Stat = 0x%x\n", stat);
+}
+
+void led_SetShutdown(bool turnOff) {
+   uint8_t data[2] = {};
+
+   data[0] = REG_SHUTDOWN;
+   data[1] = (turnOff ? 0x0 : 0x1);
+   HAL_I2C_Master_Transmit(&hi2c1, LED_CONT_ADDR, data, 2, 1000);
 }
 
 void led_ClearDisplay(void) {
-   //TODO actually disable the channels to save power
+   //TODO actually disable the channels to save power (enable them when setting chan)
    for(int i = 0; i < 36; i++) {
       led_SetChannel(i, 0);
    }
